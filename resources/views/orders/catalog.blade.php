@@ -26,7 +26,7 @@
                             </ul>
                         </div>
 
-                        <form action="{{ route('orders.store') }}" method="POST" class="mt-6">
+                        <form action="{{ route('orders.store') }}" method="POST" class="mt-6" onsubmit="return confirm('Apakah Anda yakin ingin mendaftar layanan ini?')">
                             @csrf
                             <input type="hidden" name="service_id" value="{{ $service->id }}">
                             <x-primary-button class="w-full justify-center">

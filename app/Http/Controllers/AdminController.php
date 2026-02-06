@@ -11,6 +11,42 @@ use Illuminate\Http\Request;
 class AdminController extends Controller
 {
     /**
+     * Tampilkan Dashboard Analytics
+     */
+    public function dashboard()
+    {
+        $user = auth()->user();
+
+        if ($user->hasRole('admin')) {
+            $stats = [
+                'total_users' => \App\Models\User::role('customer')->count(),
+                'total_orders' => \App\Models\Order::count(),
+                'total_revenue' => \App\Models\Finance::sum('revenue'),
+                'total_profit' => \App\Models\Finance::sum('revenue') - \App\Models\Finance::sum('cogs'),
+            ];
+
+            $chartCategories = \App\Models\Service::withCount('orders')->get();
+            $monthlyRevenue = \App\Models\Finance::selectRaw('SUM(revenue) as total, MONTH(created_at) as month')
+                ->groupBy('month')->orderBy('month')->get();
+
+            return view('dashboard', compact('stats', 'chartCategories', 'monthlyRevenue'));
+        }
+
+        // Customer Dashboard Logic
+        $topServices = \App\Models\Service::latest()->take(3)->get();
+        
+        // Ambil semua jadwal yang status ordernya 'active' milik user ini
+        $upcomingSchedules = \App\Models\Schedule::whereHas('order', function($q) use ($user) {
+            $q->where('user_id', $user->id)->where('status', 'active');
+        })
+        ->with('order.service')
+        ->orderBy('start_time')
+        ->get();
+
+        return view('dashboard', compact('topServices', 'upcomingSchedules'));
+    }
+
+    /**
      * Tampilkan semua order untuk admin
      */
     public function index()
@@ -49,11 +85,24 @@ class AdminController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
             'location_type' => 'required|in:online,offline',
-            'address' => 'required_if:location_type,offline',
+            'meeting_link' => 'required_if:location_type,online|nullable|url',
+            'address' => 'required_if:location_type,offline|nullable|string',
+            'latitude' => 'required_if:location_type,offline|nullable|numeric',
+            'longitude' => 'required_if:location_type,offline|nullable|numeric',
         ]);
 
         $schedule = \App\Models\Schedule::findOrFail($scheduleId);
-        $schedule->update($request->all());
+        
+        $data = $request->all();
+        if ($request->location_type == 'online') {
+            $data['address'] = null;
+            $data['latitude'] = null;
+            $data['longitude'] = null;
+        } else {
+            $data['meeting_link'] = null;
+        }
+
+        $schedule->update($data);
 
         return redirect()->back()->with('success', 'Jadwal berhasil diperbarui.');
     }
@@ -119,7 +168,11 @@ class AdminController extends Controller
             'title' => 'required|string',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
-            'meeting_link' => 'nullable|url',
+            'location_type' => 'required|in:online,offline',
+            'meeting_link' => 'required_if:location_type,online|nullable|url',
+            'address' => 'required_if:location_type,offline|nullable|string',
+            'latitude' => 'required_if:location_type,offline|nullable|numeric',
+            'longitude' => 'required_if:location_type,offline|nullable|numeric',
         ]);
 
         $order = Order::findOrFail($orderId);
@@ -129,7 +182,11 @@ class AdminController extends Controller
             'title' => $request->title,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
-            'meeting_link' => $request->meeting_link,
+            'location_type' => $request->location_type,
+            'meeting_link' => $request->location_type == 'online' ? $request->meeting_link : null,
+            'address' => $request->location_type == 'offline' ? $request->address : null,
+            'latitude' => $request->location_type == 'offline' ? $request->latitude : null,
+            'longitude' => $request->location_type == 'offline' ? $request->longitude : null,
         ]);
 
         $order->update(['status' => 'active']);
@@ -147,7 +204,10 @@ class AdminController extends Controller
         $totalCogs = $finances->sum('cogs');
         $totalProfit = $totalRevenue - $totalCogs;
 
-        return view('admin.finance.index', compact('finances', 'totalRevenue', 'totalCogs', 'totalProfit'));
+        $availableItems = \App\Models\CogsItem::all();
+        $availableFacilitators = \App\Models\Facilitator::all();
+
+        return view('admin.finance.index', compact('finances', 'totalRevenue', 'totalCogs', 'totalProfit', 'availableItems', 'availableFacilitators'));
     }
 
     /**

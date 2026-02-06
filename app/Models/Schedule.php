@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Schedule extends Model
 {
-    protected $fillable = ['order_id', 'title', 'description', 'start_time', 'end_time', 'meeting_link', 'google_event_id', 'location_type', 'address'];
+    protected $fillable = ['order_id', 'title', 'description', 'start_time', 'end_time', 'meeting_link', 'google_event_id', 'location_type', 'address', 'latitude', 'longitude'];
 
     public function order()
     {

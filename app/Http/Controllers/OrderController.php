@@ -141,4 +141,18 @@ class OrderController extends Controller
         $orders = Order::where('user_id', Auth::id())->with('service', 'documents')->latest()->get();
         return view('orders.my-orders', compact('orders'));
     }
+
+    /**
+     * Hapus/Batalkan order (Hanya jika status pending)
+     */
+    public function destroy($orderId)
+    {
+        $order = Order::where('user_id', Auth::id())
+                      ->where('status', 'pending')
+                      ->findOrFail($orderId);
+
+        $order->delete();
+
+        return redirect()->back()->with('success', 'Pendaftaran layanan berhasil dibatalkan.');
+    }
 }

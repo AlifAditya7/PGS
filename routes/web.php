@@ -9,9 +9,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [AdminController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/test-pdf', function () {
     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML('<h1>Integrasi PDF Berhasil!</h1><p>Ini adalah file PDF yang digenerate oleh sistem PGS.</p>');
@@ -22,6 +20,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/catalog', [OrderController::class, 'index'])->name('orders.catalog');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my-orders');
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     Route::get('/orders/{order}/download-letter', [OrderController::class, 'downloadLetter'])->name('orders.download-letter');
     Route::get('/orders/{order}/download-invoice', [OrderController::class, 'downloadInvoice'])->name('orders.download-invoice');
     Route::post('/orders/{order}/upload-signed-letter', [OrderController::class, 'uploadSignedLetter'])->name('orders.upload-signed-letter');
@@ -48,6 +47,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
     // Manage Catalog
     Route::resource('services', \App\Http\Controllers\Admin\ServiceController::class)->names('admin.services');
+
+    // Manage Users
+    Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index');
+    Route::post('/users', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('admin.users.store');
+    Route::delete('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
+
+    // Manage COGS Items & Facilitators
+    Route::resource('cogs-items', \App\Http\Controllers\Admin\CogsItemController::class)->names('admin.cogs-items');
+    Route::resource('facilitators', \App\Http\Controllers\Admin\FacilitatorController::class)->names('admin.facilitators');
 });
 
 require __DIR__.'/auth.php';
