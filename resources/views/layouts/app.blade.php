@@ -14,6 +14,21 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- NProgress for Lazy Loading feel -->
+        <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
+        <link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css">
+
+        <style>
+            .page-fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            #nprogress .bar { background: #2563eb !important; height: 3px !important; }
+        </style>
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -31,7 +46,7 @@
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
+                <header class="bg-white dark:bg-gray-800 shadow transition-all duration-500">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
@@ -39,10 +54,21 @@
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main class="page-fade-in">
                 {{ $slot }}
             </main>
         </div>
+
+        <script>
+            // Show progress bar on start
+            NProgress.start();
+            window.onload = function() { NProgress.done(); };
+
+            // Show on any form submission
+            document.addEventListener('submit', function() {
+                NProgress.start();
+            });
+        </script>
 
         <script>
             var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');

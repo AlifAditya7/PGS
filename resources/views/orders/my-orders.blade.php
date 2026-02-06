@@ -67,7 +67,10 @@
                                         <div class="mt-2 p-3 bg-purple-50 dark:bg-gray-900 border border-purple-200 dark:border-purple-900 rounded">
                                             <p class="text-xs font-bold text-purple-700 uppercase">Jadwal Pelaksanaan:</p>
                                             <p class="text-sm font-semibold">{{ $sch->title }}</p>
-                                            <p class="text-xs">{{ \Carbon\Carbon::parse($sch->start_time)->format('d M Y, H:i') }} WIB</p>
+                                            <p class="text-xs">
+                                                {{ \Carbon\Carbon::parse($sch->start_time)->format('d M Y, H:i') }} - 
+                                                {{ \Carbon\Carbon::parse($sch->end_time)->format('H:i') }} WIB
+                                            </p>
                                             
                                             @if($sch->location_type == 'online')
                                                 <a href="{{ $sch->meeting_link }}" target="_blank" class="mt-2 block w-full text-center bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition">Join Online Meeting</a>

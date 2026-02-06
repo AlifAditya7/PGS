@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
 {
-    protected $fillable = ['name', 'slug', 'category', 'price', 'description', 'benefits', 'estimated_resources', 'type', 'activities'];
+    protected $fillable = ['name', 'slug', 'category', 'price', 'description', 'benefits', 'estimated_resources', 'type', 'activities', 'proposal_path'];
 
     protected $casts = [
         'benefits' => 'array',

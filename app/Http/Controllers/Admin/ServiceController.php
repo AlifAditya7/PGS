@@ -7,6 +7,8 @@ use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+use Illuminate\Support\Facades\Storage;
+
 class ServiceController extends Controller
 {
     public function index()
@@ -30,7 +32,12 @@ class ServiceController extends Controller
             'description' => 'nullable|string',
             'benefits' => 'nullable|array',
             'activities' => 'nullable|array',
+            'proposal' => 'nullable|mimes:pdf|max:15360', // Max 15MB
         ]);
+
+        if ($request->hasFile('proposal')) {
+            $data['proposal_path'] = $request->file('proposal')->store('proposals', 'public');
+        }
 
         $data['slug'] = Str::slug($data['name']);
         Service::create($data);
@@ -53,7 +60,16 @@ class ServiceController extends Controller
             'description' => 'nullable|string',
             'benefits' => 'nullable|array',
             'activities' => 'nullable|array',
+            'proposal' => 'nullable|mimes:pdf|max:15360', // Max 15MB
         ]);
+
+        if ($request->hasFile('proposal')) {
+            // Delete old file if exists
+            if ($service->proposal_path) {
+                Storage::disk('public')->delete($service->proposal_path);
+            }
+            $data['proposal_path'] = $request->file('proposal')->store('proposals', 'public');
+        }
 
         $data['slug'] = Str::slug($data['name']);
         $service->update($data);

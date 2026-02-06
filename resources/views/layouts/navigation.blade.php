@@ -26,30 +26,35 @@
                     @endunless
 
                     @role('admin')
-                        <x-nav-link :href="route('admin.services.index')" :active="request()->routeIs('admin.services.*')">
-                            {{ __('Kelola Katalog') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.cogs-items.index')" :active="request()->routeIs('admin.cogs-items.*')">
-                            {{ __('Item COGS') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.facilitators.index')" :active="request()->routeIs('admin.facilitators.*')">
-                            {{ __('Facilitators') }}
-                        </x-nav-link>
                         <x-nav-link :href="route('admin.orders.index')" :active="request()->routeIs('admin.orders.*')">
-                            {{ __('Admin Management') }}
+                            {{ __('Order Management') }}
                         </x-nav-link>
                         <x-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                             {{ __('Laporan Keuangan') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
-                            {{ __('Manajemen User') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.activity-logs.index')" :active="request()->routeIs('admin.activity-logs.*')">
-                            {{ __('Log Aktivitas') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.*')">
-                            {{ __('Profil Perusahaan') }}
-                        </x-nav-link>
+
+                        {{-- Dropdown Master Data --}}
+                        <div class="hidden sm:flex sm:items-center sm:ms-4">
+                            <x-dropdown align="left" width="48">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                        <div>Data & Log</div>
+                                        <div class="ms-1">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                        </div>
+                                    </button>
+                                </x-slot>
+                                <x-slot name="content">
+                                    <x-dropdown-link :href="route('admin.services.index')">{{ __('Kelola Katalog') }}</x-dropdown-link>
+                                    <x-dropdown-link :href="route('admin.cogs-items.index')">{{ __('Item COGS') }}</x-dropdown-link>
+                                    <x-dropdown-link :href="route('admin.facilitators.index')">{{ __('Facilitators') }}</x-dropdown-link>
+                                    <x-dropdown-link :href="route('admin.users.index')">{{ __('Manajemen User') }}</x-dropdown-link>
+                                    <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                                    <x-dropdown-link :href="route('admin.activity-logs.index')">{{ __('Log Aktivitas') }}</x-dropdown-link>
+                                    <x-dropdown-link :href="route('admin.settings.index')">{{ __('Profil Perusahaan') }}</x-dropdown-link>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
                     @endrole
                 </div>
             </div>
@@ -65,7 +70,15 @@
                         @endif
                     </button>
 
-                    <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden" x-cloak>
+                    <div x-show="open" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         @click.away="open = false" 
+                         class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden" x-cloak>
                         <div class="p-3 border-b dark:border-gray-700 font-bold text-xs uppercase text-gray-500">Notifikasi</div>
                         <div class="max-h-64 overflow-y-auto">
                             @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
@@ -149,14 +162,32 @@
             @endunless
 
             @role('admin')
-                <x-responsive-nav-link :href="route('admin.services.index')" :active="request()->routeIs('admin.services.*')">
-                    {{ __('Kelola Katalog') }}
-                </x-responsive-nav-link>
+                <div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-2 px-4 text-[10px] font-bold uppercase text-gray-400">Manajemen Utama</div>
                 <x-responsive-nav-link :href="route('admin.orders.index')" :active="request()->routeIs('admin.orders.*')">
-                    {{ __('Admin Management') }}
+                    {{ __('Order Management') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                     {{ __('Laporan Keuangan') }}
+                </x-responsive-nav-link>
+
+                <div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-2 px-4 text-[10px] font-bold uppercase text-gray-400">Master Data & Log</div>
+                <x-responsive-nav-link :href="route('admin.services.index')" :active="request()->routeIs('admin.services.*')">
+                    {{ __('Kelola Katalog') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.cogs-items.index')">
+                    {{ __('Item COGS') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.facilitators.index')">
+                    {{ __('Facilitators') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.users.index')">
+                    {{ __('Manajemen User') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.activity-logs.index')">
+                    {{ __('Log Aktivitas') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.settings.index')">
+                    {{ __('Profil Perusahaan') }}
                 </x-responsive-nav-link>
             @endrole
         </div>

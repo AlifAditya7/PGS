@@ -39,11 +39,25 @@ class AdminController extends Controller
                 'total_profit' => \App\Models\Finance::sum('revenue') - \App\Models\Finance::sum('cogs'),
             ];
 
-            $chartCategories = \App\Models\Service::withCount('orders')->get();
-            $monthlyRevenue = \App\Models\Finance::selectRaw('SUM(revenue) as total, MONTH(created_at) as month')
-                ->groupBy('month')->orderBy('month')->get();
+            // Next Closest Event
+            $nextEvent = \App\Models\Schedule::with('order.service')
+                ->where('start_time', '>=', now())
+                ->orderBy('start_time')
+                ->first();
 
-            return view('dashboard', compact('stats', 'chartCategories', 'monthlyRevenue'));
+            $chartCategories = \App\Models\Service::withCount('orders')->get();
+            
+            // Monthly Data
+            $monthlyData = \App\Models\Finance::selectRaw('SUM(revenue) as revenue, SUM(revenue - cogs) as profit, MONTH(created_at) as label')
+                ->groupBy('label')->orderBy('label')->get()
+                ->map(fn($item) => ['label' => date('F', mktime(0,0,0,$item->label,1)), 'revenue' => $item->revenue, 'profit' => $item->profit]);
+
+            // Daily Data (Last 30 Days)
+            $dailyData = \App\Models\Finance::selectRaw('SUM(revenue) as revenue, SUM(revenue - cogs) as profit, DATE(created_at) as label')
+                ->where('created_at', '>=', now()->subDays(30))
+                ->groupBy('label')->orderBy('label')->get();
+
+            return view('dashboard', compact('stats', 'chartCategories', 'monthlyData', 'dailyData', 'nextEvent'));
         }
 
         // Customer Dashboard Logic
@@ -94,6 +108,20 @@ class AdminController extends Controller
         ActivityLog::log('DELETE_ORDER', 'Menghapus data pendaftaran Order #' . $orderNum);
 
         return redirect()->route('admin.orders.index')->with('success', 'Order berhasil dihapus.');
+    }
+
+    /**
+     * Hapus Jadwal
+     */
+    public function destroySchedule($scheduleId)
+    {
+        $schedule = \App\Models\Schedule::findOrFail($scheduleId);
+        $orderNum = $schedule->order->order_number;
+        $schedule->delete();
+
+        ActivityLog::log('DELETE_SCHEDULE', 'Menghapus salah satu jadwal sesi Order #' . $orderNum);
+
+        return redirect()->back()->with('success', 'Sesi jadwal berhasil dihapus.');
     }
 
     /**

@@ -43,6 +43,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::delete('/orders/{order}', [AdminController::class, 'destroyOrder'])->name('admin.orders.destroy');
     Route::post('/orders/{order}/set-schedule', [AdminController::class, 'setSchedule'])->name('admin.orders.set-schedule');
     Route::patch('/schedules/{schedule}', [AdminController::class, 'updateSchedule'])->name('admin.schedules.update');
+    Route::delete('/schedules/{schedule}', [AdminController::class, 'destroySchedule'])->name('admin.schedules.destroy');
     
     Route::get('/finance', [AdminController::class, 'financeIndex'])->name('admin.finance.index');
     Route::post('/finance/download-report', [AdminController::class, 'downloadFinanceReport'])->name('admin.finance.download-report');

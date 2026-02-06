@@ -8,7 +8,7 @@
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <form action="{{ route('admin.services.store') }}" method="POST">
+                <form action="{{ route('admin.services.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="grid grid-cols-1 gap-4">
                         <div>
@@ -37,6 +37,11 @@
                         <div>
                             <x-input-label for="price" :value="__('Harga (Rp)')" />
                             <x-text-input id="price" name="price" type="number" class="mt-1 block w-full" required />
+                        </div>
+
+                        <div>
+                            <x-input-label for="proposal" :value="__('File Proposal (PDF)')" />
+                            <input id="proposal" name="proposal" type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="application/pdf" />
                         </div>
 
                         <div>

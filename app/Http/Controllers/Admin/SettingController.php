@@ -14,6 +14,7 @@ class SettingController extends Controller
             'company_name' => Setting::get('company_name', 'PT. PGS Consulting Indonesia'),
             'company_address' => Setting::get('company_address', 'Jl. Contoh Alamat No. 123, Jakarta'),
             'company_phone' => Setting::get('company_phone', '021-12345678'),
+            'company_whatsapp' => Setting::get('company_whatsapp', '08123456789'),
             'company_email' => Setting::get('company_email', 'info@pgs-consulting.com'),
             'bank_name' => Setting::get('bank_name', 'Bank Mandiri'),
             'bank_account_number' => Setting::get('bank_account_number', '123-456-7890'),

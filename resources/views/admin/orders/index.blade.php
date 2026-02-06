@@ -73,132 +73,129 @@
                                         </div>
                                     @endforeach
 
-                                    {{-- Section Penjadwalan --}}
+                                    {{-- Section Penjadwalan (Multi-Session CRUD) --}}
                                     @if($order->status == 'paid' || $order->status == 'active')
-                                        @php $schedule = $order->schedules->first(); @endphp
-                                        <div class="mt-4 p-4 border rounded bg-blue-50 dark:bg-gray-900 dark:border-blue-800" 
-                                             x-data="{ 
-                                                locType: '{{ $schedule->location_type ?? 'online' }}',
-                                                lat: '{{ $schedule->latitude ?? -6.200000 }}',
-                                                lng: '{{ $schedule->longitude ?? 106.816666 }}',
-                                                address: '{{ $schedule->address ?? '' }}',
-                                                map: null,
-                                                marker: null,
-                                                initMap() {
-                                                    if (this.locType === 'offline' && !this.map) {
-                                                        setTimeout(() => {
-                                                            const container = document.getElementById('map-picker-{{ $order->id }}');
-                                                            if (!container) return;
-                                                            
-                                                            this.map = L.map('map-picker-{{ $order->id }}').setView([this.lat, this.lng], 13);
-                                                            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
-                                                            this.marker = L.marker([this.lat, this.lng], {draggable: true}).addTo(this.map);
-                                                            
-                                                            this.marker.on('dragend', (e) => {
-                                                                let pos = e.target.getLatLng();
-                                                                this.lat = pos.lat;
-                                                                this.lng = pos.lng;
-                                                            });
+                                        <div class="mt-6 p-4 border rounded-xl bg-slate-50 dark:bg-gray-900/50 dark:border-gray-700" x-data="{ showForm: false, editingSes: null }">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h4 class="text-xs font-black uppercase text-slate-500">Manajemen Sesi & Jadwal</h4>
+                                                <button @click="showForm = true; editingSes = null" class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-700">+ Tambah Sesi</button>
+                                            </div>
 
-                                                            this.map.on('click', (e) => {
-                                                                this.marker.setLatLng(e.latlng);
-                                                                this.lat = e.latlng.lat;
-                                                                this.lng = e.latlng.lng;
-                                                            });
-                                                            this.map.invalidateSize();
-                                                        }, 300);
-                                                    } else if (this.locType === 'offline' && this.map) {
-                                                        setTimeout(() => { this.map.invalidateSize(); }, 300);
-                                                    }
-                                                },
-                                                async searchAddress() {
-                                                    if(!this.address) return;
-                                                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${this.address}`);
-                                                    const data = await response.json();
-                                                    if (data.length > 0) {
-                                                        this.lat = data[0].lat;
-                                                        this.lng = data[0].lon;
-                                                        this.map.setView([this.lat, this.lng], 15);
-                                                        this.marker.setLatLng([this.lat, this.lng]);
-                                                    } else {
-                                                        alert('Alamat tidak ditemukan');
-                                                    }
-                                                }
-                                             }" 
-                                             x-init="if(locType === 'offline') initMap(); $watch('locType', value => { if(value === 'offline') initMap() })">
-                                            
-                                            <h4 class="text-sm font-bold mb-2">{{ $schedule ? 'Update Jadwal' : 'Tetapkan Jadwal' }}</h4>
-                                            <form action="{{ $schedule ? route('admin.schedules.update', $schedule->id) : route('admin.orders.set-schedule', $order->id) }}" method="POST" class="space-y-2">
-                                                @csrf
-                                                @if($schedule) @method('PATCH') @endif
-                                                
-                                                <input type="text" name="title" value="{{ $schedule->title ?? '' }}" placeholder="Judul Sesi" class="w-full text-xs p-1 rounded dark:bg-gray-800 border-gray-300" required>
-                                                
-                                                <div class="flex space-x-2">
-                                                    <input type="datetime-local" name="start_time" value="{{ $schedule ? date('Y-m-d\TH:i', strtotime($schedule->start_time)) : '' }}" class="w-1/2 text-xs p-1 rounded dark:bg-gray-800 border-gray-300" required>
-                                                    <input type="datetime-local" name="end_time" value="{{ $schedule ? date('Y-m-d\TH:i', strtotime($schedule->end_time)) : '' }}" class="w-1/2 text-xs p-1 rounded dark:bg-gray-800 border-gray-300" required>
-                                                </div>
-
-                                                <div class="flex space-x-4 mb-2">
-                                                    <label class="inline-flex items-center text-xs cursor-pointer">
-                                                        <input type="radio" name="location_type" value="online" x-model="locType" class="text-blue-600 focus:ring-blue-500">
-                                                        <span class="ml-1">Online</span>
-                                                    </label>
-                                                    <label class="inline-flex items-center text-xs cursor-pointer">
-                                                        <input type="radio" name="location_type" value="offline" x-model="locType" class="text-blue-600 focus:ring-blue-500">
-                                                        <span class="ml-1">Offline</span>
-                                                    </label>
-                                                </div>
-
-                                                <div x-show="locType == 'online'">
-                                                    <input type="url" name="meeting_link" value="{{ $schedule->meeting_link ?? '' }}" placeholder="Link Meeting" class="w-full text-xs p-1 rounded dark:bg-gray-800 border-gray-300">
-                                                </div>
-
-                                                <div x-show="locType == 'offline'" class="mt-2 space-y-3" x-data="{ searchQuery: '' }">
-                                                    {{-- Input Alamat Riil --}}
-                                                    <div>
-                                                        <label class="text-[10px] font-bold uppercase text-gray-500">Alamat Lengkap (Detail):</label>
-                                                        <textarea name="address" x-model="address" placeholder="Contoh: Gedung Graha PGS, Lt. 3, Ruang Consulting" class="w-full text-xs p-1 rounded dark:bg-gray-800 border-gray-300" rows="2">{{ $schedule->address ?? '' }}</textarea>
-                                                    </div>
-
-                                                    {{-- Search & Map Picker --}}
-                                                    <div>
-                                                        <label class="text-[10px] font-bold uppercase text-gray-500">Titik Koordinat Peta:</label>
-                                                        <div class="flex space-x-1 mb-2">
-                                                            <input type="text" x-model="searchQuery" placeholder="Cari lokasi di peta..." class="flex-1 text-xs p-1 rounded dark:bg-gray-800 border-gray-300">
-                                                            <button type="button" @click="
-                                                                if(!searchQuery) return;
-                                                                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}`)
-                                                                    .then(res => res.json())
-                                                                    .then(data => {
-                                                                        if(data.length > 0) {
-                                                                            lat = data[0].lat; lng = data[0].lon;
-                                                                            map.setView([lat, lng], 15);
-                                                                            marker.setLatLng([lat, lng]);
-                                                                        } else { alert('Lokasi tidak ditemukan'); }
-                                                                    })
-                                                            " class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200">Cari</button>
+                                            {{-- List Sesi --}}
+                                            <div class="space-y-2 mb-4">
+                                                @forelse($order->schedules as $sch)
+                                                    <div class="p-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm flex justify-between items-start">
+                                                        <div>
+                                                            <div class="text-[10px] font-bold text-blue-600 uppercase">{{ $sch->location_type }}</div>
+                                                            <div class="text-xs font-bold">{{ $sch->title }}</div>
+                                                            <div class="text-[9px] text-gray-500">{{ \Carbon\Carbon::parse($sch->start_time)->format('d M Y, H:i') }}</div>
                                                         </div>
+                                                        <div class="flex space-x-2">
+                                                            <button @click="editingSes = {{ json_encode($sch) }}; showForm = true;" class="text-blue-500 hover:underline text-[10px]">Edit</button>
+                                                            <form action="{{ route('admin.schedules.destroy', $sch->id) }}" method="POST" onsubmit="return confirm('Hapus sesi ini?')">
+                                                                @csrf @method('DELETE')
+                                                                <button type="submit" class="text-red-500 hover:underline text-[10px]">Hapus</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                @empty
+                                                    <p class="text-[10px] text-gray-400 italic text-center py-2">Belum ada sesi yang dijadwalkan.</p>
+                                                @endforelse
+                                            </div>
+
+                                            {{-- Floating Form (Inline Modal feel) --}}
+                                            <template x-if="showForm">
+                                                <div class="mt-4 p-4 border-t dark:border-gray-700 space-y-3 bg-gray-50 dark:bg-gray-900 rounded-b-xl">
+                                                    <h5 class="text-[10px] font-black uppercase" x-text="editingSes ? 'Edit Sesi' : 'Tambah Sesi Baru'"></h5>
+                                                    <form :action="editingSes ? '{{ url('admin/schedules') }}/' + editingSes.id : '{{ route('admin.orders.set-schedule', $order->id) }}'" method="POST" class="space-y-2">
+                                                        @csrf
+                                                        <template x-if="editingSes"><input type="hidden" name="_method" value="PATCH"></template>
                                                         
-                                                        <div id="map-picker-{{ $order->id }}" class="h-48 w-full rounded border mb-2"></div>
+                                                        <input type="text" name="title" :value="editingSes ? editingSes.title : ''" placeholder="Judul Sesi" class="w-full text-xs p-1.5 rounded dark:bg-gray-800 border-gray-300" required>
                                                         
                                                         <div class="flex space-x-2">
                                                             <div class="flex-1">
-                                                                <span class="text-[9px] text-gray-400 uppercase">Latitude</span>
-                                                                <input type="text" name="latitude" x-model="lat" readonly class="w-full text-[10px] p-0 bg-transparent border-none focus:ring-0">
+                                                                <label class="text-[9px] uppercase text-gray-400">Mulai</label>
+                                                                <input type="datetime-local" name="start_time" :value="editingSes ? editingSes.start_time.replace(' ', 'T').substring(0,16) : ''" class="w-full text-xs p-1 rounded dark:bg-gray-800 border-gray-300" required>
                                                             </div>
                                                             <div class="flex-1">
-                                                                <span class="text-[9px] text-gray-400 uppercase">Longitude</span>
-                                                                <input type="text" name="longitude" x-model="lng" readonly class="w-full text-[10px] p-0 bg-transparent border-none focus:ring-0">
+                                                                <label class="text-[9px] uppercase text-gray-400">Selesai</label>
+                                                                <input type="datetime-local" name="end_time" :value="editingSes ? editingSes.end_time.replace(' ', 'T').substring(0,16) : ''" class="w-full text-xs p-1 rounded dark:bg-gray-800 border-gray-300" required>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </div>
 
-                                                <button type="submit" class="w-full bg-blue-600 text-white text-xs py-1 rounded hover:bg-blue-700">
-                                                    {{ $schedule ? 'Simpan Perubahan' : 'Aktifkan & Set Jadwal' }}
-                                                </button>
-                                            </form>
+                                                        <div class="space-y-3" x-data="{ 
+                                                            loc: editingSes ? editingSes.location_type : 'online',
+                                                            lat: editingSes ? editingSes.latitude : -6.200000,
+                                                            lng: editingSes ? editingSes.longitude : 106.816666,
+                                                            map: null,
+                                                            marker: null,
+                                                            searchQ: '',
+                                                            initMap() {
+                                                                if (this.loc === 'offline' && !this.map) {
+                                                                    setTimeout(() => {
+                                                                        this.map = L.map('map-picker-' + (editingSes ? editingSes.id : 'new-{{ $order->id }}')).setView([this.lat, this.lng], 13);
+                                                                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+                                                                        this.marker = L.marker([this.lat, this.lng], {draggable: true}).addTo(this.map);
+                                                                        this.marker.on('dragend', (e) => {
+                                                                            let p = e.target.getLatLng(); this.lat = p.lat; this.lng = p.lng;
+                                                                        });
+                                                                        this.map.invalidateSize();
+                                                                    }, 200);
+                                                                }
+                                                            },
+                                                            search() {
+                                                                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${this.searchQ}`)
+                                                                    .then(r => r.json()).then(d => {
+                                                                        if(d.length>0) {
+                                                                            this.lat = d[0].lat; this.lng = d[0].lon;
+                                                                            this.map.setView([this.lat, this.lng], 15);
+                                                                            this.marker.setLatLng([this.lat, this.lng]);
+                                                                        }
+                                                                    });
+                                                            }
+                                                        }" x-init="$watch('loc', v => { if(v==='offline') initMap() })">
+                                                            
+                                                            <div class="flex space-x-4 py-1">
+                                                                <label class="inline-flex items-center text-[10px]">
+                                                                    <input type="radio" name="location_type" value="online" x-model="loc" class="text-blue-600">
+                                                                    <span class="ml-1">Online</span>
+                                                                </label>
+                                                                <label class="inline-flex items-center text-[10px]">
+                                                                    <input type="radio" name="location_type" value="offline" x-model="loc" class="text-blue-600">
+                                                                    <span class="ml-1">Offline</span>
+                                                                </label>
+                                                            </div>
+
+                                                            <div x-show="loc == 'online'">
+                                                                <input type="url" name="meeting_link" :value="editingSes ? editingSes.meeting_link : ''" placeholder="Link Meeting" class="w-full text-xs p-1.5 rounded dark:bg-gray-800 border-gray-300">
+                                                            </div>
+
+                                                            <div x-show="loc == 'offline'" class="space-y-2">
+                                                                <textarea name="address" placeholder="Alamat Lengkap" class="w-full text-xs p-1.5 rounded dark:bg-gray-800 border-gray-300" rows="2" x-text="editingSes ? editingSes.address : ''"></textarea>
+                                                                
+                                                                <div class="flex space-x-1">
+                                                                    <input type="text" x-model="searchQ" placeholder="Cari di peta..." class="flex-1 text-[10px] p-1 rounded border-gray-300 dark:bg-gray-800">
+                                                                    <button type="button" @click="search()" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-[10px]">Cari</button>
+                                                                </div>
+
+                                                                <div :id="'map-picker-' + (editingSes ? editingSes.id : 'new-{{ $order->id }}')" class="h-32 w-full rounded border"></div>
+                                                                
+                                                                <div class="flex space-x-2">
+                                                                    <input type="hidden" name="latitude" x-model="lat">
+                                                                    <input type="hidden" name="longitude" x-model="lng">
+                                                                    <div class="text-[8px] text-gray-400">Coord: <span x-text="lat"></span>, <span x-text="lng"></span></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="flex space-x-2 pt-2">
+                                                            <button type="submit" class="flex-1 bg-blue-600 text-white text-[10px] font-bold py-1.5 rounded hover:bg-blue-700">Simpan Sesi</button>
+                                                            <button type="button" @click="showForm = false; editingSes = null" class="px-3 bg-gray-200 dark:bg-gray-700 text-[10px] rounded">Batal</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </template>
                                         </div>
                                     @endif
 

@@ -33,8 +33,13 @@
                             </div>
 
                             <div>
-                                <x-input-label for="company_phone" :value="__('Nomor Telepon')" />
-                                <x-text-input id="company_phone" name="company_phone" type="text" class="mt-1 block w-full" :value="$settings['company_phone']" required />
+                                <x-input-label for="company_phone" :value="__('Nomor Telepon Kantor')" />
+                                <x-text-input id="company_phone" name="company_phone" type="text" class="mt-1 block w-full" :value="$settings['company_phone']" placeholder="Contoh: 62211234567" required />
+                            </div>
+
+                            <div>
+                                <x-input-label for="company_whatsapp" :value="__('Nomor WhatsApp')" />
+                                <x-text-input id="company_whatsapp" name="company_whatsapp" type="text" class="mt-1 block w-full" :value="$settings['company_whatsapp']" placeholder="Contoh: 628123456789" required />
                             </div>
 
                             <div>
