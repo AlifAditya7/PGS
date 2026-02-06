@@ -16,7 +16,7 @@
 <body>
     <div class="header">
         <h1>SURAT KONFIRMASI LAYANAN</h1>
-        <p>PT. PGS Consulting & Training</p>
+        <p>{{ \App\Models\Setting::get('company_name', 'PT. PGS Consulting & Training') }}</p>
     </div>
 
     <div class="content">

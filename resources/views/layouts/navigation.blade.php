@@ -44,12 +44,44 @@
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                             {{ __('Manajemen User') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.activity-logs.index')" :active="request()->routeIs('admin.activity-logs.*')">
+                            {{ __('Log Aktivitas') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.*')">
+                            {{ __('Profil Perusahaan') }}
+                        </x-nav-link>
                     @endrole
                 </div>
             </div>
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-4">
+                {{-- Notification Bell --}}
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 relative">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        @if(auth()->user()->unreadNotifications->count() > 0)
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1 rounded-full">{{ auth()->user()->unreadNotifications->count() }}</span>
+                        @endif
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden" x-cloak>
+                        <div class="p-3 border-b dark:border-gray-700 font-bold text-xs uppercase text-gray-500">Notifikasi</div>
+                        <div class="max-h-64 overflow-y-auto">
+                            @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
+                                <a href="{{ route('notifications.read', $notification->id) }}" class="block p-3 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    <p class="text-xs font-bold text-gray-800 dark:text-white">{{ $notification->data['title'] }}</p>
+                                    <p class="text-[10px] text-gray-500 mt-1 line-clamp-2">{{ $notification->data['message'] }}</p>
+                                    <p class="text-[8px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                </a>
+                            @empty
+                                <div class="p-4 text-center text-xs text-gray-500 italic">Tidak ada notifikasi baru.</div>
+                            @endforelse
+                        </div>
+                        <a href="{{ route('notifications.index') }}" class="block p-2 text-center text-[10px] font-bold text-blue-600 bg-gray-50 dark:bg-gray-900 hover:underline uppercase">Lihat Semua</a>
+                    </div>
+                </div>
+
                 {{-- Dark Mode Toggle --}}
                 <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
                     <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>

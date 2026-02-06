@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\PGSNotification;
+use Illuminate\Support\Facades\Notification;
+use App\Models\User;
 
 class OrderController extends Controller
 {
@@ -44,6 +47,14 @@ class OrderController extends Controller
 
             // Update status order menjadi confirmed (menunggu verifikasi admin)
             $order->update(['status' => 'confirmed']);
+
+            // Notify Admin
+            $admins = User::role('admin')->get();
+            Notification::send($admins, new PGSNotification(
+                'Surat Konfirmasi Diunggah',
+                Auth::user()->name . ' telah mengunggah surat bertanda tangan untuk ' . $order->order_number,
+                route('admin.orders.index')
+            ));
 
             return redirect()->back()->with('success', 'Surat berhasil diupload. Admin akan segera memverifikasi.');
         }
@@ -97,6 +108,14 @@ class OrderController extends Controller
                 'status' => 'pending'
             ]);
 
+            // Notify Admin
+            $admins = User::role('admin')->get();
+            Notification::send($admins, new PGSNotification(
+                'Bukti Bayar Masuk',
+                Auth::user()->name . ' telah mengunggah bukti bayar untuk ' . $order->order_number,
+                route('admin.orders.index')
+            ));
+
             return redirect()->back()->with('success', 'Bukti pembayaran berhasil diupload. Admin akan segera memverifikasi.');
         }
 
@@ -130,6 +149,14 @@ class OrderController extends Controller
             'status' => 'draft',
         ]);
 
+        // Notify Admin
+        $admins = User::role('admin')->get();
+        Notification::send($admins, new PGSNotification(
+            'Pendaftaran Baru',
+            Auth::user()->name . ' mendaftar layanan: ' . $service->name,
+            route('admin.orders.index')
+        ));
+
         return redirect()->route('orders.my-orders')->with('success', 'Pendaftaran berhasil. Silakan download dan tanda tangan surat konfirmasi.');
     }
 
@@ -151,7 +178,16 @@ class OrderController extends Controller
                       ->where('status', 'pending')
                       ->findOrFail($orderId);
 
+        $orderNumber = $order->order_number;
         $order->delete();
+
+        // Notify Admin
+        $admins = User::role('admin')->get();
+        Notification::send($admins, new PGSNotification(
+            'Pembatalan Pendaftaran',
+            Auth::user()->name . ' telah membatalkan pendaftaran ' . $orderNumber,
+            route('admin.orders.index')
+        ));
 
         return redirect()->back()->with('success', 'Pendaftaran layanan berhasil dibatalkan.');
     }

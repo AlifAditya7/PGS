@@ -16,7 +16,7 @@
 <body>
     <div class="header">
         <div class="invoice-title">INVOICE</div>
-        <p>PT. PGS Consulting & Training</p>
+        <p>{{ \App\Models\Setting::get('company_name', 'PT. PGS Consulting & Training') }}</p>
     </div>
 
     <div style="margin-bottom: 20px;">
@@ -52,8 +52,8 @@
 
     <div style="margin-top: 40px; border: 1px dashed #cbd5e1; padding: 15px;">
         <p style="margin-top: 0;"><strong>Metode Pembayaran (Transfer Bank):</strong></p>
-        <p style="margin-bottom: 0;">Bank Mandiri: 123-456-7890<br>
-        A/N: PT. PGS Consulting Indonesia</p>
+        <p style="margin-bottom: 0;">{{ \App\Models\Setting::get('bank_name') }}: {{ \App\Models\Setting::get('bank_account_number') }}<br>
+        A/N: {{ \App\Models\Setting::get('bank_account_name') }}</p>
     </div>
 
     <div class="footer">

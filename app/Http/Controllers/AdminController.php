@@ -7,9 +7,23 @@ use App\Models\Document;
 use App\Models\Payment;
 use App\Models\Finance;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Notifications\PGSNotification;
+use Illuminate\Support\Facades\Notification;
+
+use App\Models\ActivityLog;
 
 class AdminController extends Controller
 {
+    /**
+     * Tampilkan Riwayat Aktivitas
+     */
+    public function activityLogs()
+    {
+        $logs = ActivityLog::with('user')->latest()->paginate(50);
+        return view('admin.activity-logs.index', compact('logs'));
+    }
+
     /**
      * Tampilkan Dashboard Analytics
      */
@@ -62,6 +76,9 @@ class AdminController extends Controller
     {
         $document = Document::findOrFail($documentId);
         $document->update(['status' => 'uploaded']);
+
+        ActivityLog::log('UNVERIFY_DOC', 'Membatalkan verifikasi dokumen Order #' . $document->order->order_number);
+
         return redirect()->back()->with('success', 'Verifikasi dokumen dibatalkan.');
     }
 
@@ -71,7 +88,11 @@ class AdminController extends Controller
     public function destroyOrder($orderId)
     {
         $order = Order::findOrFail($orderId);
+        $orderNum = $order->order_number;
         $order->delete();
+
+        ActivityLog::log('DELETE_ORDER', 'Menghapus data pendaftaran Order #' . $orderNum);
+
         return redirect()->route('admin.orders.index')->with('success', 'Order berhasil dihapus.');
     }
 
@@ -104,6 +125,15 @@ class AdminController extends Controller
 
         $schedule->update($data);
 
+        ActivityLog::log('UPDATE_SCHEDULE', 'Mengubah rincian jadwal untuk Order #' . $schedule->order->order_number);
+
+        // Notify Customer
+        $schedule->order->user->notify(new PGSNotification(
+            'Pembaruan Jadwal Pelaksanaan',
+            'Ada perubahan pada jadwal layanan ' . $schedule->order->service->name . '. Silakan cek dashboard Anda.',
+            route('orders.my-orders')
+        ));
+
         return redirect()->back()->with('success', 'Jadwal berhasil diperbarui.');
     }
 
@@ -133,6 +163,8 @@ class AdminController extends Controller
             'expense_items' => $items
         ]);
 
+        ActivityLog::log('UPDATE_COGS', 'Memperbarui rincian COGS untuk Order #' . $finance->order->order_number);
+
         return redirect()->back()->with('success', 'Rincian COGS berhasil diperbarui.');
     }
 
@@ -155,6 +187,15 @@ class AdminController extends Controller
             ['order_id' => $order->id],
             ['revenue' => $payment->amount]
         );
+
+        ActivityLog::log('VERIFY_PAYMENT', 'Memverifikasi pembayaran untuk Order #' . $order->order_number);
+
+        // Notify Customer
+        $order->user->notify(new PGSNotification(
+            'Pembayaran Diterima',
+            'Pembayaran Anda untuk order ' . $order->order_number . ' telah diverifikasi.',
+            route('orders.my-orders')
+        ));
 
         return redirect()->back()->with('success', 'Pembayaran berhasil diverifikasi. Status order kini PAID.');
     }
@@ -191,6 +232,15 @@ class AdminController extends Controller
 
         $order->update(['status' => 'active']);
 
+        ActivityLog::log('SET_SCHEDULE', 'Menetapkan jadwal awal pelaksanaan untuk Order #' . $order->order_number);
+
+        // Notify Customer
+        $order->user->notify(new PGSNotification(
+            'Jadwal Pelaksanaan Ditetapkan',
+            'Jadwal untuk layanan ' . $order->service->name . ' telah diatur oleh Admin.',
+            route('orders.my-orders')
+        ));
+
         return redirect()->back()->with('success', 'Jadwal telah ditetapkan dan status order kini ACTIVE.');
     }
 
@@ -199,7 +249,15 @@ class AdminController extends Controller
      */
     public function financeIndex()
     {
-        $finances = Finance::with('order.service', 'order.user')->latest()->get();
+        $finances = Finance::with('order.service', 'order.user')
+            ->latest()
+            ->get();
+
+        // Group by Month and Year
+        $groupedFinances = $finances->groupBy(function($date) {
+            return \Carbon\Carbon::parse($date->created_at)->format('F Y');
+        });
+
         $totalRevenue = $finances->sum('revenue');
         $totalCogs = $finances->sum('cogs');
         $totalProfit = $totalRevenue - $totalCogs;
@@ -207,7 +265,31 @@ class AdminController extends Controller
         $availableItems = \App\Models\CogsItem::all();
         $availableFacilitators = \App\Models\Facilitator::all();
 
-        return view('admin.finance.index', compact('finances', 'totalRevenue', 'totalCogs', 'totalProfit', 'availableItems', 'availableFacilitators'));
+        return view('admin.finance.index', compact('groupedFinances', 'totalRevenue', 'totalCogs', 'totalProfit', 'availableItems', 'availableFacilitators'));
+    }
+
+    /**
+     * Download Laporan Keuangan Bulanan (PDF)
+     */
+    public function downloadFinanceReport(Request $request)
+    {
+        $monthYear = $request->month_year; // Format: "February 2026"
+        $date = \Carbon\Carbon::parse($monthYear);
+        
+        $finances = Finance::with('order.service', 'order.user')
+            ->whereMonth('created_at', $date->month)
+            ->whereYear('created_at', $date->year)
+            ->get();
+
+        $summary = [
+            'month' => $monthYear,
+            'total_revenue' => $finances->sum('revenue'),
+            'total_cogs' => $finances->sum('cogs'),
+            'total_profit' => $finances->sum('revenue') - $finances->sum('cogs'),
+        ];
+
+        $pdf = Pdf::loadView('pdf.finance_report', compact('finances', 'summary'));
+        return $pdf->download('Laporan_Keuangan_' . str_replace(' ', '_', $monthYear) . '.pdf');
     }
 
     /**
@@ -240,6 +322,15 @@ class AdminController extends Controller
             );
             
             $order->update(['status' => 'confirmed']);
+
+            ActivityLog::log('VERIFY_DOC', 'Memverifikasi surat konfirmasi untuk Order #' . $order->order_number);
+
+            // Notify Customer
+            $order->user->notify(new PGSNotification(
+                'Surat Diverifikasi',
+                'Surat konfirmasi Anda telah diverifikasi. Invoice pembayaran telah diterbitkan.',
+                route('orders.my-orders')
+            ));
         }
 
         return redirect()->back()->with('success', 'Dokumen berhasil diverifikasi. Invoice telah diterbitkan.');

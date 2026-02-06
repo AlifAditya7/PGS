@@ -11,6 +11,17 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
+            {{-- Email Verification Warning --}}
+            @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! auth()->user()->hasVerifiedEmail())
+                <div class="mb-8 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 shadow-sm rounded-r-lg flex justify-between items-center">
+                    <div>
+                        <p class="font-bold">Alamat email belum terverifikasi!</p>
+                        <p class="text-sm">Silakan cek email Anda untuk tautan verifikasi. Anda belum bisa melakukan pendaftaran layanan sebelum email terverifikasi.</p>
+                    </div>
+                    <a href="{{ route('profile.edit') }}" class="text-xs bg-red-200 hover:bg-red-300 px-3 py-1.5 rounded font-black uppercase transition">Verifikasi Sekarang</a>
+                </div>
+            @endif
+
             {{-- Welcome Message (Shared) --}}
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-8">
                 <div class="p-6 text-gray-900 dark:text-gray-100 flex justify-between items-center">
