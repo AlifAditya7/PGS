@@ -39,11 +39,12 @@ class AdminController extends Controller
                 'total_profit' => \App\Models\Finance::sum('revenue') - \App\Models\Finance::sum('cogs'),
             ];
 
-            // Next Closest Event
-            $nextEvent = \App\Models\Schedule::with('order.service')
+            // Next Closest Events (Top 3)
+            $upcomingEvents = \App\Models\Schedule::with(['order.service', 'order.user'])
                 ->where('start_time', '>=', now())
                 ->orderBy('start_time')
-                ->first();
+                ->take(3)
+                ->get();
 
             $chartCategories = \App\Models\Service::withCount('orders')->get();
             
@@ -57,7 +58,7 @@ class AdminController extends Controller
                 ->where('created_at', '>=', now()->subDays(30))
                 ->groupBy('label')->orderBy('label')->get();
 
-            return view('dashboard', compact('stats', 'chartCategories', 'monthlyData', 'dailyData', 'nextEvent'));
+            return view('dashboard', compact('stats', 'chartCategories', 'monthlyData', 'dailyData', 'upcomingEvents'));
         }
 
         // Customer Dashboard Logic

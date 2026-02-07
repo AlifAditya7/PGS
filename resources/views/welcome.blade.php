@@ -36,7 +36,7 @@
                     <x-application-logo class="w-auto h-32" />
                 </div>
                 <p class="mt-6 text-xl text-gray-600 dark:text-gray-400 font-medium italic">
-                    Trusted Partner in Consulting, Auditing, & Training.
+                    We are the solution for your business need.
                 </p>
             </div>
 
@@ -61,7 +61,7 @@
             </div>
 
             <div class="mt-16 text-sm text-gray-500">
-                &copy; {{ date('Y') }} PT. PGS Consulting Indonesia.
+                &copy; {{ date('Y') }} PT. Pratama Global Sistem.
             </div>
         </div>
 

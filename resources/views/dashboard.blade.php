@@ -27,7 +27,7 @@
                 <div class="p-6 text-gray-900 dark:text-gray-100 flex justify-between items-center">
                     <div>
                         <h1 class="text-2xl font-bold">Selamat Datang, {{ Auth::user()->name }}!</h1>
-                        <p class="text-gray-500 text-sm">Aplikasi PGS - Trusted Partner in Consulting & Training.</p>
+                        <p class="text-gray-500 text-sm">We are the solution for your business need.</p>
                     </div>
                     @unless(auth()->user()->hasRole('admin'))
                         <a href="{{ route('orders.catalog') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition">Lihat Katalog</a>
@@ -56,28 +56,34 @@
                     </div>
                 </div>
 
-                {{-- Next Event Highlight --}}
+                {{-- Next Events Highlight (Top 3) --}}
                 <div class="mb-8">
-                    <h3 class="text-lg font-bold mb-4 dark:text-white uppercase tracking-wider text-gray-500 text-xs">Jadwal Pelaksanaan Terdekat</h3>
-                    @if($nextEvent)
-                        <div class="bg-blue-600 text-white p-6 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
-                            <div class="relative z-10">
-                                <span class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold uppercase">{{ $nextEvent->location_type }}</span>
-                                <h4 class="text-2xl font-black mt-2">{{ $nextEvent->title }}</h4>
-                                <p class="opacity-80">{{ $nextEvent->order->service->name }} — {{ $nextEvent->order->user->name }}</p>
+                    <h3 class="text-lg font-bold mb-4 dark:text-white uppercase tracking-wider text-gray-500 text-xs text-center">Jadwal Pelaksanaan Terdekat</h3>
+                    <div class="flex flex-col md:flex-row gap-4 justify-center">
+                        @forelse($upcomingEvents as $event)
+                            <div class="w-full @if($upcomingEvents->count() > 1) md:flex-1 @else md:max-w-4xl @endif bg-blue-600 text-white p-6 rounded-xl shadow-lg relative overflow-hidden flex flex-col justify-between transition hover:shadow-2xl">
+                                <div class="relative z-10">
+                                    <span class="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{{ $event->location_type }}</span>
+                                    <h4 class="text-xl font-black mt-2 leading-tight">{{ $event->title }}</h4>
+                                    <p class="text-sm opacity-80 mt-1">{{ $event->order->service->name }}</p>
+                                    <p class="text-[11px] opacity-70 mt-3 font-bold">Customer: {{ $event->order->user->name }}</p>
+                                </div>
+                                <div class="mt-6 flex justify-between items-end relative z-10">
+                                    <div>
+                                        <div class="text-2xl font-black">{{ \Carbon\Carbon::parse($event->start_time)->format('d M Y') }}</div>
+                                        <div class="text-sm opacity-80 font-bold">{{ \Carbon\Carbon::parse($event->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($event->end_time)->format('H:i') }} WIB</div>
+                                    </div>
+                                    <a href="{{ route('admin.orders.index') }}" class="text-xs font-black uppercase bg-white text-blue-600 px-4 py-2 rounded-lg shadow-sm hover:bg-blue-50 transition">Lihat Detail</a>
+                                </div>
+                                {{-- Decorative Pattern --}}
+                                <svg class="absolute -right-10 -bottom-10 w-48 h-48 text-white/10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                             </div>
-                            <div class="text-right relative z-10 mt-4 md:mt-0">
-                                <div class="text-3xl font-black">{{ \Carbon\Carbon::parse($nextEvent->start_time)->format('d M Y') }}</div>
-                                <div class="text-lg opacity-80">{{ \Carbon\Carbon::parse($nextEvent->start_time)->format('H:i') }} WIB</div>
+                        @empty
+                            <div class="w-full bg-gray-100 dark:bg-gray-800 p-6 rounded-xl text-center text-gray-500 italic border-2 border-dashed dark:border-gray-700">
+                                Tidak ada jadwal aktif mendatang.
                             </div>
-                            {{-- Decorative Icon --}}
-                            <svg class="absolute -right-10 -bottom-10 w-64 h-64 text-white/10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
-                        </div>
-                    @else
-                        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl text-center text-gray-500 italic border-2 border-dashed dark:border-gray-700">
-                            Tidak ada jadwal aktif mendatang.
-                        </div>
-                    @endif
+                        @endforelse
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">

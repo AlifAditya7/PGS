@@ -17,9 +17,9 @@
     </head>
     <body class="antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col items-center justify-center p-6">
         <div class="max-w-md w-full text-center space-y-6">
-            {{-- Logo Fallback --}}
+            {{-- Application Logo --}}
             <div class="flex justify-center mb-8">
-                <span class="font-black text-5xl text-blue-600 dark:text-blue-400">PGS</span>
+                <x-application-logo class="w-auto h-24" />
             </div>
 
             <h1 class="text-9xl font-black text-gray-200 dark:text-gray-800">
@@ -42,7 +42,7 @@
             </div>
 
             <div class="pt-12 text-sm text-gray-400">
-                &copy; {{ date('Y') }} PT. PGS Consulting Indonesia
+                &copy; {{ date('Y') }} PT. Pratama Global Sistem
             </div>
         </div>
     </body>
