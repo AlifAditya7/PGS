@@ -15,5 +15,11 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
+    $this->assertDatabaseHas('users', ['email' => 'test@example.com']);
+    
+    // Pastikan role customer diberikan
+    $user = \App\Models\User::where('email', 'test@example.com')->first();
+    expect($user->hasRole('customer'))->toBeTrue();
+
     $response->assertRedirect(route('dashboard', absolute: false));
 });
